@@ -2,12 +2,27 @@ const databaseName = document.getElementById('dbName');
 const databaseVersion = document.getElementById('dbVersion');
 const btn = document.getElementById('createDB');
 const insert = document.getElementById('insert');
+const view = document.getElementById('view');
 let database = null;
 
 btn.onclick = createDataBase;
 insert.onclick = insertPost;
+view.onclick = viewPost;
 
 
+
+function viewPost() {
+    let tx = database.transaction('personal_posts', 'readonly');
+    let post = tx.objectStore('personal_posts');
+    let request = post.openCursor()
+    request.onsuccess = (e) => {
+        let cursor = e.target.result;
+        if (cursor) {
+             cursor.continue()
+             }
+    }
+    
+}
 
 
 function insertPost() {
@@ -17,6 +32,10 @@ function insertPost() {
     }
 
     let tx = database.transaction('personal_posts', 'readwrite');
+    console.log(tx) // Error : DOMException: Key already exists in the object store
+    tx.onerror = (err) => {
+        alert(err.target.error);
+    }
     let myPost = tx.objectStore('personal_posts')
     myPost.add(post);
 }
@@ -31,7 +50,6 @@ const request = indexedDB.open(`${databaseName.value}`, databaseVersion.value);
 
 request.onupgradeneeded = function(e) {
     database = e.target.result
-    console.log(database);
 
 
     const personalPosts = database.createObjectStore("personal_posts", {keyPath: "title"})
